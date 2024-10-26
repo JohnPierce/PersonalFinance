@@ -1,0 +1,156 @@
+# D2 Notation
+personal_finance_portfolio: {
+    investment: {
+      shape: sql_table
+      id: int {constraint: primary_key}
+      name: varchar(100)
+      ticker_symbol: varchar(10) {constraint: [blank; null]}
+      inception_date: date {constraint: [blank; null]}
+      investment_family: varchar(100) {constraint: [blank; null]}
+      investment_category: varchar(100) {constraint: [blank; null]}
+      investment_type: varchar(100) {constraint: [blank; null]}
+      investment_style: varchar(100) {constraint: [blank; null]}
+      investment_overview: text {constraint: [blank; null]}
+      investment_website: varchar(100) {constraint: [blank; null]}
+      created_at: timestamp with time zone
+    }
+    stock: {
+      shape: sql_table
+      id: int {constraint: primary_key}
+      exchange: varchar(100) {constraint: [blank; null]}
+      sector: varchar(100) {constraint: [blank; null]}
+      industry: varchar(100) {constraint: [blank; null]}
+      sub_industry: varchar(100) {constraint: [blank; null]}
+      created_at: timestamp with time zone
+    }
+    etf: {
+      shape: sql_table
+      id: int {constraint: primary_key}
+      inception_date: date {constraint: [blank; null]}
+      created_at: timestamp with time zone
+    }
+    mutual_fund: {
+      shape: sql_table
+      id: int {constraint: primary_key}
+      name: varchar(100)
+      ticker_symbol: varchar(10) {constraint: [blank; null]}
+      inception_date: date {constraint: [blank; null]}
+      fund_family: varchar(100) {constraint: [blank; null]}
+      fund_category: varchar(100) {constraint: [blank; null]}
+      fund_type: varchar(100) {constraint: [blank; null]}
+      fund_style: varchar(100) {constraint: [blank; null]}
+      fund_overview: text {constraint: [blank; null]}
+      fund_website: varchar(100) {constraint: [blank; null]}
+      created_at: timestamp with time zone
+    }
+    transactions {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        transaction_date: date
+        transaction_type: varchar(100)
+        transaction_amount: decimal(20, 2)
+        transaction_fee: decimal(20, 2) {constraint: [blank; null]}
+        transaction_description: text {constraint: [blank; null]}
+        created_at: timestamp with time zone
+        company: int {constraint: [foreign_key; null]}
+        fund: int {constraint: [foreign_key; null]}
+        
+    }
+    portfolio {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        name: varchar(100)
+        created_at: timestamp with time zone
+        company: int {constraint: [foreign_key; null]}
+        fund: int {constraint: [foreign_key; null]}
+    }
+  }
+  tax_data_records{
+    federal_income_tax_rate {
+        shape: sql_table
+        ref_website: varchar(200)
+        tax_rate: dict {constraint: [type; low; high; rate]}
+
+    }
+    tax_records {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        name: varchar(100)
+        created_at: timestamp with time zone
+        TaxType: int {constraint: [foreign_key; null]}
+        transaction_buy: {constraint: [foreign_key; null]}
+        transaction_sell: {constraint: [foreign_key; null]}
+    }
+  }
+  company_fund_data{
+    company: {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        name: varchar(100)
+        ticker_symbol: varchar(10) {constraint: [blank; null]}
+        corporate_headquarters: int {constraint: [foreign_key; null]}
+        market_cap: decimal(20, 2) {constraint: [blank; null]}
+        revenue: decimal(20, 2) {constraint: [blank; null]}
+        ceo: int {constraint: [blank; null]}
+        top_executives: string {constraint: [blank; null]}
+        top_finance_followers: string {constraint: [blank; null]}
+        sector: varchar(100) {constraint: [blank; null]}
+        industry: varchar(100) {constraint: [blank; null]}
+        sub_industry: varchar(100) {constraint: [blank; null]}
+        company_overview: text {constraint: [blank; null]}
+        company_website: varchar(100) {constraint: [blank; null]}
+      }
+      country: {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        name: varchar(100)
+        abbreviation: varchar(10) {constraint: [blank; null]}
+        latitude: decimal(20, 10) {constraint: [blank; null]}
+        longitude: decimal(20, 10) {constraint: [blank; null]}
+        created_at: timestamp with time zone
+      }
+      city: {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        name: varchar(100)
+        country: int {constraint: foreign_key}
+        geonameid: int {constraint: [blank; null]}
+        created_at: timestamp with time zone
+      }
+      company_office: {
+        shape: sql_table
+        id: int {constraint: primary_key}
+        company: int {constraint: foreign_key}
+        street_address: varchar(100) {constraint: [blank; null]}
+        street_address2: varchar(100) {constraint: [blank; null]}
+        city: int {constraint: [foreign_key; null]}
+        state_province: varchar(100) {constraint: [blank; null]}
+        postal_code: varchar(100) {constraint: [blank; null]}
+        country: int {constraint: [foreign_key; null]}
+        created_at: timestamp with time zone
+      }
+      contact: {
+        shape: sql_table
+        first_name: varchar(100)
+        middle_name: varchar(100) {constraint: [blank; null]}
+        last_name: varchar(100)
+        email: varchar(100) {constraint: [blank; null]}
+        mobile_phone: varchar(20) {constraint: [blank; null]}
+        office_phone: varchar(20) {constraint: [blank; null]}
+        info: text {constraint: [blank; null]}
+        created_at: timestamp with time zone
+        company: int {constraint: [foreign_key; null]}
+        company_office: int {constraint: [foreign_key; null]}
+        company_group: int {constraint: [foreign_key; null]}
+        job_title: varchar(50) {constraint: [blank; null]}
+      }
+  }
+  personal_finance_models.Investment -> personal_finance_models.stock : Stock Inherits Investment
+  personal_finance_models.Investment -> personal_finance_models.etf : ETF Inherits Investment
+  personal_finance_models.Investment -> personal_finance_models.mutual_fund : Mutual Fund Inherits Investment
+  company_fund_data.City.country -> company_fund_data.country.id
+  company_fund_data.company_office.city -> company_fund_data.City.id
+  company_fund_data.company_office.company -> company_fund_data.company.id : deleted_with_company
+  company_fund_data.company_office.country -> company_fund_data.country.id
+  company_fund_data.Contact.company -> company_fund_data.company.id : Null with company deletion
+  company_fund_data.Contact.company_office -> company_fund_data.company_office.id

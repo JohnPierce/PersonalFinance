@@ -1,0 +1,68 @@
+# Personal Finance Project
+
+## Overview
+The objective of this project is to help manage personal finances assuming that budget and expenses are inputs into the system what will be taken care are scenarios based on those inputs; e.g. school expenses, kids tuition, 401K drawdown, medicare, moving....
+
+In order to accomplish this one part will be to consolidate personal finance portfolios in order to perform analysis on the aggregate, include tax implications which of course may change over time depending on current tax codes, income level etc...
+
+The second part will be the information to capture tax implications, including; however not limited to managing long term, short term gains and losses on capatal gains. Federal tax, state tax and enough information to perform what if analysis on pre-tax versus post-tax $'s.
+
+The third part of the project will be the ability to enter, manage and calculate time based events as they related to income, expense, medicare and tax changes.
+
+This project aims to collate personal finance portfolios for a consolidated view and perform analysis on them.
+Analysis on the portfolio as well as marginal tax brackets and impact of income, required 401K drawdown; e.g. 2% at age 70; medicare expense as it relates to income levels at ages 63, 64.
+Where to move the money; e.g. move from 401K to Roth, pay tax on the movement on a lower income year.
+Also look at losses and if you sell your Tbills before they mature they become ordinary income to offset your losses.
+Also look at
+Uniform life expectancy tables - required drawdown on 401K
+
+
+## Structure
+- `perfinbe/`: Django backend containing the database and data streaming functionalities.
+- `perfinfe/`: React frontend for displaying results and enabling user interaction with the data.
+
+## Setup
+Instructions for setting up the entire project, including any necessary configurations for both the backend and frontend.
+
+## Usage
+General usage instructions and examples.
+
+## Contributing
+Guidelines for contributing to the project.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for more details.
+
+
+## Credits
+This project uses the [FinanceToolkit](https://github.com/FinanceToolkit/FinanceToolkit) library. We would like to give credit to the developers of this library for their excellent work.
+
+## Description
+Personal finance project to create a query system into my personal finances in order to make strategic decisions, understand returns, where the money is placed and impact of different decisions.
+The objective will be met if I have a holistic view of my finances, portfolio returns compared with different benchmarks over 1, 3, 5, since inception timeframes. Impact of selling post tax accounts, pre-tax account.
+ROI and portfolio value estimation 1 year, 2 year, 3 year... out.
+Keeping in mind the availability of such tools as:
+   www.firecalc.com
+   www.portfoliovisualizer.com
+   www.investor.vanguard.com
+   www.cfiresim.com
+   www.financetoolkit.com --> Installed the library onto the system to use
+   https://github.com/JerBouma/FinanceToolkit --> finance toolkit library installed in project
+   https://www.jeroenbouma.com/projects/financetoolkit --> financetoolkit documentation
+   fiscaldata.treasury.gov/api-documentation
+   site.financemodelingprep.com - 
+   
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+Instructions on how to install and set up the project. For example:
+```sh
+git clone https://github.com/your-username/your-repository.git
+cd your-repository
+npm install
+

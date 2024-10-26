@@ -1,0 +1,94 @@
+# D2 Notation
+# d2 file representing the database schema for Pesonal Finace
+# The following is a simplified version capturing the minimum amount
+# of data, relying on the realtime stock, etf, bond API to get prices, beta's etc..
+# These data structures are for the personal_finance_portfolio app.
+
+personal_finance_portfolio:{
+portfolio: {
+    # Portfolio is a collection of investments
+    label: "Portfolio"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    name: varchar(100) {constraint: not null}
+    platform: varchar(100) {constraint: foreign_key}
+    account_type: varchar(50) {constraint: foreign_key}
+    account_detail: varchar(50) {constraint: foreign_key}
+    tax_status: varchar(50) {constraint: not null}
+    created_at: timestamp {constraint: default current_timestamp}
+}
+
+platform: {
+    # Platform is the broker or platform where the portfolio is held
+    label: "Platform"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    name: varchar(100) {constraint: not null}
+    url: varchar(100) {constraint: not null}
+}
+
+account_type: {
+    # AccountType is the type of account the portfolio is held in
+    # Individual Brokerage, Joint Brokerage, Retirement, Custodial Brokerage, Trust Brokerage
+    # Educational Savings, 
+    label: "AccountType"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    account_type: varchar(100) {constraint: not null}
+    account_type_choices: varchar(100) {constraint: Individual Brokerage | Joint Brokerage | Retirement | Custodial Brokerage | Trust Brokerage | Educational Savings}  
+}
+
+account_detail: {
+    # AccountDetail is the details of the account
+    label: "AccountDetail"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    account_detail: varchar(100) {constraint: not null}
+    account_detail_choices: varchar(100) {constraint: Dependent Upon Account Type}
+
+
+
+investment: {
+    label: "Investment"
+    shape: sql_table
+    id int {constraint: primary_key}
+    symbol: varchar(10) {constraint: not null}
+    name: varchar(100) {constraint: not null}
+}
+
+portfolio_investment: {
+    label: "PortfolioInvestment"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    portfolio: int {constraint: foreign_key}
+    investment: int {constraint: foreign_key}
+    quantity: int {constraint: calculated from transactions}
+
+}
+
+transaction: {
+    label: "Transaction"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    portfolio_investment: int {constraint: foreign_key}
+    transaction_type: int {constraint: foreign_key, transaction_type}
+    quantity: float {constraint: not null}
+    price: float {constraint: not null}
+    transaction_date: date {constraint: not null}
+}
+transaction_type: {
+    label: "TransactionType"
+    shape: sql_table
+    id: int {constraint: primary_key}
+    transaction_type: varchar(100) {constraint: buy | sell | dividend | interest}
+}
+}
+// Relationships
+personal_finance_portfolio.portfolio.platform -> personal_finance_portfolio.platform: "one-to-one"
+personal_finance_portfolio.portfolio.account_type -> personal_finance_portfolio.account_type: "one-to-one"
+personal_finance_portfolio.portfolio.account_detail -> personal_finance_portfolio.account_detail: "one-to-one"
+personal_finance_portfolio.portfolio -> personal_finance_portfolio.portfolio_investment: "one-to-many"
+personal_finance_portfolio.investment -> personal_finance_portfolio.portfolio_investment: "one-to-many"
+personal_finance_portfolio.portfolio_investment -> personal_finance_portfolio.transaction: "one-to-many"
+personal_finance_portfolio.transaction.portfolio_investment_id -> personal_finance_portfolio.portfolio_investment.id: "one-to-one"
+personal_finance_portfolio.transaction.transaction_type -> personal_finance_portfolio.transaction_type: "one-to-one"
