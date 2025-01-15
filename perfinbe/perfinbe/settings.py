@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "personal_finance_portfolio.apps.PersonalFinancePortfolioConfig",
+    "tax_data_records.apps.TaxDataRecordsConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

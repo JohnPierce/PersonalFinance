@@ -1,4 +1,8 @@
+import uuid
 from django.db import models
+from django.dispatch import Signal  # Add this import
+
+
 
 # Create your models here.
 # personal_finance_portfolio/models.py
@@ -283,29 +287,161 @@ class PortfolioInvestment(models.Model):
     
 
 class Transaction(models.Model):
-    """Represents a financial transaction related to a portfolio investment.
+    """
+    Represents a financial transaction related to a portfolio investment.
+
+    This model tracks transactions and maintains essential data needed for tax reporting,
+    while detailed tax calculations are handled in the tax_data_records app.
 
     Attributes:
-        portfolio_investment (PortfolioInvestment): The portfolio investment associated with the transaction.
-        transaction_type (str): The type of transaction (BUY or SELL).
-        quantity (int): The quantity of the investment.
-        price (Decimal): The price of the investment.
-        transaction_date (datetime): The date and time when the transaction occurred.
+        portfolio_investment (PortfolioInvestment): The associated investment
+        transaction_type (str): The type of transaction (BUY, SELL, etc.)
+        transaction_source (str): Source/reason for the transaction
+        quantity (int): The quantity affected by the transaction
+        price (Decimal): The price per unit
+        transaction_date (datetime): When the transaction occurred
+        settlement_date (datetime, optional): When the transaction settled
+        fees (Decimal, optional): Associated transaction fees
+        notes (str, optional): Additional transaction details
+        reference_id (UUID): Unique identifier for tax system reference
     """
 
-    transaction_choices = [
+    TRANSACTION_TYPES = [
         ('BUY', 'Buy'),
         ('SELL', 'Sell'),
-        ('DIVIDENDS', 'Dividends'),
-        ('SPLITS', 'Splits'),
-        ('TRANSFER', 'Transfer')
+        ('DIVIDEND', 'Dividend'),
+        ('SPLIT', 'Stock Split'),
+        ('TRANSFER', 'Transfer'),
+        ('FEE', 'Fee'),
+        ('OTHER', 'Other')
     ]
 
-    portfolio_investment = models.ForeignKey(PortfolioInvestment, on_delete=models.CASCADE)
-    transaction_type = models.CharField(max_length=10, choices=transaction_choices)
-    quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    TRANSACTION_SOURCES = [
+        ('PURCHASE', 'Direct Purchase'),
+        ('REINVESTMENT', 'Dividend Reinvestment'),
+        ('CORPORATE_ACTION', 'Corporate Action'),
+        ('TRANSFER_IN', 'Transfer In'),
+        ('TRANSFER_OUT', 'Transfer Out'),
+        ('ADJUSTMENT', 'Adjustment'),
+    ]
+
+    portfolio_investment = models.ForeignKey(
+        PortfolioInvestment, 
+        on_delete=models.CASCADE,
+        related_name='transactions'
+    )
+    
+    # Transaction Classification
+    transaction_type = models.CharField(
+        max_length=10, 
+        choices=TRANSACTION_TYPES
+    )
+    transaction_source = models.CharField(
+        max_length=20,
+        choices=TRANSACTION_SOURCES,
+        default='PURCHASE'
+    )
+    
+    # Transaction Details
+    quantity = models.IntegerField(
+        help_text="Quantity affected by the transaction"
+    )
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Price per unit"
+    )
     transaction_date = models.DateTimeField()
+    settlement_date = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    
+    # Financial Details
+    fees = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text="Transaction fees, commissions, etc."
+    )
+    
+    # Additional Information
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional transaction details"
+    )
+    related_transaction = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        help_text="Link to related transaction (e.g., dividend to reinvestment)"
+    )
+
+    # Reference for tax system
+    reference_id = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        help_text="Unique identifier for tax system reference"
+    )
+
+    class Meta:
+        ordering = ['-transaction_date']
+        indexes = [
+            models.Index(fields=['portfolio_investment', 'transaction_date']),
+            models.Index(fields=['transaction_type']),
+            models.Index(fields=['reference_id']),
+        ]
 
     def __str__(self):
-        return f"{self.transaction_type} {self.quantity} of {self.portfolio_investment.investment.symbol}"
+        return (f"{self.transaction_type} {self.quantity} of "
+                f"{self.portfolio_investment.investment.symbol} "
+                f"@ {self.price}")
+
+    @property
+    def total_amount(self):
+        """
+        Calculate total transaction amount including fees.
+        
+        Returns:
+            Decimal: Total transaction amount (quantity * price + fees)
+        """
+        return (self.quantity * self.price) + self.fees
+
+    def save(self, *args, **kwargs):
+        """
+        Override save to handle special transaction types and create related transactions.
+        """
+        is_new = self.pk is None
+        
+        # Handle dividend reinvestment
+        if (is_new and self.transaction_type == 'DIVIDEND' and 
+            self.portfolio_investment.portfolio.dividend_reinvestment):
+            
+            # Create reinvestment transaction
+            reinvestment = Transaction(
+                portfolio_investment=self.portfolio_investment,
+                transaction_type='BUY',
+                transaction_source='REINVESTMENT',
+                quantity=int(self.total_amount / self.price),
+                price=self.price,
+                transaction_date=self.transaction_date,
+                notes=f"Reinvestment of dividend {self.total_amount}",
+                related_transaction=self
+            )
+            
+            super().save(*args, **kwargs)
+            reinvestment.save()
+            
+        else:
+            super().save(*args, **kwargs)
+
+        # Signal tax_data_records app about the new transaction
+        if is_new:
+            transaction_created.send(
+                sender=self.__class__,
+                transaction=self
+            )
+
+# Signal for tax system integration
+transaction_created = Signal()
